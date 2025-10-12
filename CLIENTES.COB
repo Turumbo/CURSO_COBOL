@@ -15,6 +15,7 @@
        01  WS-SALDO        PIC S9(10) COMP VALUE ZEROES.
       *O Z INDICA QUE É NUMERICO E OMITE OS ZEROS A ESQUERDA
        01  WS-SALDO-ED     PIC Z.ZZZ.ZZZ.ZZ9,99.
+       01  WS-TIPO-CONTA   PIC 9.
        
        PROCEDURE DIVISION.
        
@@ -28,8 +29,22 @@
            DISPLAY "NOME: "
                ACCEPT WS-NOME.
            DISPLAY "SALDO: "
-                ACCEPT WS-SALDO.
-           DISPLAY WS-NOME WS-SALDO
+               ACCEPT WS-SALDO.
+           DISPLAY "TIPO DE CONTA (1-PF 2-PJ): "
+               ACCEPT WS-TIPO-CONTA.
+
+           IF WS-SALDO GREATER THAN OR EQUAL 5000
+               AND (WS-TIPO-CONTA = 1 OR WS-TIPO-CONTA = 2)
+               MOVE WS-SALDO TO WS-SALDO-ED
+               DISPLAY "SALDO ATUAL: " WS-SALDO-ED
+           ELSE
+               EVALUATE TRUE
+                   WHEN WS-SALDO < 5000
+                       DISPLAY "POBRE"
+                   WHEN WS-TIPO-CONTA NOT = 1 AND WS-TIPO-CONTA NOT = 2
+                       DISPLAY "TIPO DE CONTA INVALIDO"
+               END-EVALUATE
+           END-IF.
            
       *OPERAÇÕES MATEMÁTICAS
       *----SOMAR
@@ -55,10 +70,10 @@
       *     DISPLAY "--------------------------------"
            
       *----USANDO O COMPUTE
-           COMPUTE WS-SALDO = WS-SALDO * 1,10
-               MOVE WS-SALDO TO WS-SALDO-ED
-           DISPLAY "SALDO ATUAL: " WS-SALDO-ED
-           DISPLAY "--------------------------------"
+      *     COMPUTE WS-SALDO = WS-SALDO * 1,10
+      *         MOVE WS-SALDO TO WS-SALDO-ED
+      *     DISPLAY "SALDO ATUAL: " WS-SALDO-ED
+      *     DISPLAY "--------------------------------"
                       
            STOP RUN.
       
