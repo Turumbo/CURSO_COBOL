@@ -16,23 +16,33 @@
       *O Z INDICA QUE É NUMERICO E OMITE OS ZEROS A ESQUERDA
        01  WS-SALDO-ED     PIC Z.ZZZ.ZZZ.ZZ9,99.
        01  WS-TIPO-CONTA   PIC 9.
+       01  WS-CONTADOR     PIC 9(03) USAGE COMP.
        
        PROCEDURE DIVISION.
        
-      *ATRIBUIÇÃO DE VALORES AS VARIÁVEIS
-      
-           MOVE "Ricardinhoo"  TO WS-NOME
-           MOVE -1300          TO WS-SALDO
-           DISPLAY WS-NOME WS-SALDO
-           
+       0100-PRINCIPAL      SECTION.
+       
+           PERFORM VARYING WS-CONTADOR FROM 0 BY 1 
+                   UNTIL WS-TIPO-CONTA EQUAL 9
+               PERFORM 0200-INICIAR
+               PERFORM 0300-PROCESSAR
+           END-PERFORM.
+           PERFORM 0400-FINALIZAR.
+           STOP RUN.
+       0100-FIM.           EXIT.
+       
+       0200-INICIAR        SECTION.
       *LEITURA DE VALORES PELO TECLADO
            DISPLAY "NOME: "
                ACCEPT WS-NOME.
            DISPLAY "SALDO: "
                ACCEPT WS-SALDO.
-           DISPLAY "TIPO DE CONTA (1-PF 2-PJ): "
+           DISPLAY "TIPO DE CONTA (1-PF 2-PJ 9-SAIR): "
                ACCEPT WS-TIPO-CONTA.
-
+           DISPLAY "--------------------------------".
+       0200-FIM.           EXIT.
+       
+       0300-PROCESSAR      SECTION.
            IF WS-SALDO GREATER THAN OR EQUAL 5000
                AND (WS-TIPO-CONTA = 1 OR WS-TIPO-CONTA = 2)
                MOVE WS-SALDO TO WS-SALDO-ED
@@ -45,6 +55,23 @@
                        DISPLAY "TIPO DE CONTA INVALIDO"
                END-EVALUATE
            END-IF.
+       0300-FIM.           EXIT.
+       
+       0400-FINALIZAR       SECTION.
+           DISPLAY "--------------------------------".
+           DISPLAY "-----------ESTATISTICA----------".
+           DISPLAY "TOTAL DE CONTAS: " WS-CONTADOR.
+       0400-FIM.            EXIT.
+       
+      *ATRIBUIÇÃO DE VALORES AS VARIÁVEIS
+      
+      *     MOVE "Ricardinhoo"  TO WS-NOME
+      *     MOVE -1300          TO WS-SALDO
+      *     DISPLAY WS-NOME WS-SALDO
+           
+      
+
+           
            
       *OPERAÇÕES MATEMÁTICAS
       *----SOMAR
@@ -74,6 +101,4 @@
       *         MOVE WS-SALDO TO WS-SALDO-ED
       *     DISPLAY "SALDO ATUAL: " WS-SALDO-ED
       *     DISPLAY "--------------------------------"
-                      
-           STOP RUN.
-      
+           
