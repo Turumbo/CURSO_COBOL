@@ -9,18 +9,18 @@
        FILE-CONTROL.
            SELECT ARQ ASSIGN TO "./EARQCLI.txt"
                FILE STATUS IS FS-ARQ.
+           SELECT SARQ ASSIGN TO "./SEARQCLI.txt"
+               FILE STATUS IS FS-SARQ.
        DATA                DIVISION.
        FILE                SECTION.
        FD  ARQ
            RECORDING MODE IS FIXED.
-       01  REGISTRO.
-           05 REG-AGENCIA      PIC X(04).
-           05 REG-CONTA        PIC X(05).
-           05 REG-NOME         PIC X(30).
-           05 REG-GERENTE      PIC X(03).
-           05 REG-TIPO-CONTA   PIC 9.
-           05 REG-SALDO        PIC 9(10)V99.
-      *LAYOUT 55 POSICOES
+           COPY "BOOKCLI".
+      
+       FD  SARQ
+           RECORDING MODE IS FIXED.
+      *LAYOUT 20 POSICOES (AGENCIA, CONTA, TIPO, SALDO)
+       01  REGISTRO-SARQ       PIC X(22).
        
       *O X INDICA QUE É ALFANUMERICO 
       * 01  WS-NOME         PIC X(20) VALUE SPACES.
@@ -34,10 +34,11 @@
        
       *----------VARIAVEIS DE STATUS-----------------
        01  FS-ARQ              PIC 9(02).
+       01  FS-SARQ             PIC 9(02).
       *----------VARIAVEIS ACUMULADORAS--------------
-       01  WS-CONTADOR         PIC 9(03) USAGE COMP.
-       01  WS-CONTADOR-VALIDO  PIC 9(03) USAGE COMP.
-       01  WS-CONTADOR-POBRE   PIC 9(03) USAGE COMP.
+       01  WS-CONTADOR         PIC 9(10) USAGE COMP.
+       01  WS-CONTADOR-VALIDO  PIC 9(10) USAGE COMP.
+       01  WS-CONTADOR-POBRE   PIC 9(10) USAGE COMP.
 
        PROCEDURE DIVISION.
        
@@ -64,11 +65,11 @@
       *         ACCEPT REG-TIPO-CONTA.
       *     DISPLAY "--------------------------------".
            OPEN INPUT ARQ.
-           IF FS-ARQ NOT EQUAL ZEROS
-               DISPLAY "ERRO NA ABERTURA DO ARQUIVO"
+           OPEN OUTPUT SARQ.
+           IF FS-ARQ NOT EQUAL ZEROS OR FS-SARQ NOT EQUAL ZEROS
+               DISPLAY "ERRO NA ABERTURA DO(S) ARQUIVO(S)"
                GOBACK
            END-IF.
-           
            PERFORM 0210-LEITURA.
       
        0200-FIM.           EXIT.
@@ -78,21 +79,31 @@
        0210-FIM.           EXIT.
        
        0300-PROCESSAR      SECTION.
-           ADD 1 TO WS-CONTADOR
+           ADD 1 TO WS-CONTADOR.
            
            IF REG-SALDO GREATER THAN OR EQUAL 5000
                AND (REG-TIPO-CONTA = 1 OR REG-TIPO-CONTA = 2)
       *         MOVE REG-SALDO TO REG-SALDO-ED
-               DISPLAY REGISTRO
+      *         DISPLAY REGISTRO
                ADD 1 TO WS-CONTADOR-VALIDO
+               STRING REG-AGENCIA      DELIMITED BY SIZE
+                      REG-CONTA        DELIMITED BY SIZE
+                      REG-TIPO-CONTA   DELIMITED BY SIZE
+                      REG-SALDO        DELIMITED BY SIZE
+                      INTO REGISTRO-SARQ
+               WRITE REGISTRO-SARQ
+               IF FS-SARQ NOT EQUAL ZEROS
+                   DISPLAY "ERRO AO GRAVAR" REG-AGENCIA REG-CONTA
+                   GOBACK
+               END-IF
            ELSE
-               EVALUATE TRUE
-                   WHEN REG-SALDO < 5000
-                       DISPLAY "POBRE"
-                   WHEN REG-TIPO-CONTA NOT = 1 
-                        AND REG-TIPO-CONTA NOT = 2
-                       DISPLAY "TIPO DE CONTA INVALIDO"
-               END-EVALUATE
+      *         EVALUATE TRUE
+      *             WHEN REG-SALDO < 5000
+      *                 DISPLAY "POBRE"
+      *             WHEN REG-TIPO-CONTA NOT = 1 
+      *                  AND REG-TIPO-CONTA NOT = 2
+      *                 DISPLAY "TIPO DE CONTA INVALIDO"
+      *         END-EVALUATE
                ADD 1 TO WS-CONTADOR-POBRE
            END-IF.
            
@@ -100,7 +111,8 @@
        0300-FIM.           EXIT.
        
        0400-FINALIZAR       SECTION.
-           CLOSE ARQ
+           CLOSE ARQ.
+           CLOSE SARQ.
            DISPLAY "--------------------------------".
            DISPLAY "-----------ESTATISTICA----------".
            DISPLAY "CLIENTES LIDOS....." WS-CONTADOR.
@@ -113,11 +125,7 @@
       *     MOVE "Ricardinhoo"  TO WS-NOME
       *     MOVE -1300          TO WS-SALDO
       *     DISPLAY WS-NOME WS-SALDO
-           
-      
 
-           
-           
       *OPERAÇÕES MATEMÁTICAS
       *----SOMAR
       *     ADD 500 TO WS-SALDO
